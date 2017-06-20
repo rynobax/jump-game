@@ -4,12 +4,19 @@ import Host from './host/Host';
 import Player from './player/Player';
 import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
+import peerUtil from '../node_modules/peerjs/lib/util';
 
 class App extends Component {
   constructor(){
     super();
-    this.state = {
-      role: 'visitor'
+    if(peerUtil.supports.data){
+      this.state = {
+        role: 'visitor'
+      };
+    } else {
+      this.state = {
+        role: 'unsupported'
+      };
     }
   }
 
@@ -18,6 +25,12 @@ class App extends Component {
       return <Host/>;
     } else if (this.state.role === 'player') {
       return <Player/>;
+    } else if (this.state.role === 'unsupported') {
+      return (
+        <div>
+          Your browser does not support WebRTC Data Channel
+        </div>
+      );
     } else {
       return <Guest 
         becomeHost={() => this.setState({role: 'host'})}
