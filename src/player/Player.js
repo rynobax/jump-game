@@ -4,18 +4,21 @@ import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
 import Controller from './Controller';
+import Checkbox from 'material-ui/Checkbox';
 
 class Player extends Component {
   constructor() {
     super();
     this.state = {
-      peer: new Peer({key: 'tdrp04ytylr0y66r'}),
+      peer: new Peer({key: 'tdrp04ytylr0y66r', debug: 3}),
       code: '',
       name: '',
-      joined: false,
-      dataConnection: null,
+      connected: false,
+      gameStarted: false,
       error: ''
     }
+
+    this.dataConnection = null;
   }
 
   joinGame = () => {
@@ -27,16 +30,48 @@ class Player extends Component {
     }, 3000)
     dataConnection.on('open', () => {
       clearTimeout(timeout);
-      this.setState({joined: true, dataConnection: dataConnection});
+      this.setState({connected: true});
+      this.dataConnection = dataConnection;
     });
     dataConnection.on('close', () => {
-      this.setState({joined: false, dataConnection: null, code: '', error: 'Lost connection to host'});
+      this.setState({connected: false, code: '', error: 'Lost connection to host'});
+      this.dataConnection = null;
+    });
+    dataConnection.on('data', (data) => {
+      console.log('data: ', data);
+      if(data === 'gameStarted') {
+        this.setState({gameStarted: true});
+      }
+      
+      else if(data === 'gameEnded') {
+        this.setState({gameStarted: false});
+      }
     });
   }
 
   render() {
-    if(this.state.joined){
-      return <Controller dataConnection={this.state.dataConnection}/>
+    if(this.state.connected){
+      if(this.state.gameStarted){
+        return (
+          <Controller 
+            jumpButtonDown={() => this.dataConnection.send('jumpButtonDown')}
+            jumpButtonUp={() => this.dataConnection.send('jumpButtonUp')}
+          />
+        )
+      } else {
+        return (
+          <Checkbox
+            label="Ready"
+            onCheck={(_, checked) => {
+              if(checked) {
+                this.dataConnection.send('ready');
+              } else {
+                this.dataConnection.send('unready');
+              }
+            }}
+          />
+        )
+      }
     } else {
       return (
         <Paper

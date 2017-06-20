@@ -1,15 +1,14 @@
 import React, { Component } from 'react';
 import './App.css';
 import Host from './host/Host';
-import Player from './player/Player';
+//import Player from './player/Player';
 import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
-import peerUtil from '../node_modules/peerjs/lib/util';
 
 class App extends Component {
   constructor(){
     super();
-    if(peerUtil.supports.data){
+    if(true){ // test for webrtc support
       this.state = {
         role: 'visitor'
       };
@@ -24,7 +23,7 @@ class App extends Component {
     if(this.state.role === 'host') {
       return <Host/>;
     } else if (this.state.role === 'player') {
-      return <Player/>;
+      //return <Player/>;
     } else if (this.state.role === 'unsupported') {
       return (
         <div>
