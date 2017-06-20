@@ -9,9 +9,11 @@ class Controller extends Component {
           label="Press Me"
           fullWidth={true}
           style={{height: 150}}
-          onClick={() => {
-            console.log('dataConnection: ', this.props.dataConnection);
-            this.props.dataConnection.send('hello')
+          onMouseDown={() => {
+            this.props.dataConnection.send('jumpButtonDown')
+          }}
+          onMouseUp={() => {
+            this.props.dataConnection.send('jumpButtonUp')
           }}
         />
       </div>

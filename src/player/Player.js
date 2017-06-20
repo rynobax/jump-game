@@ -29,6 +29,9 @@ class Player extends Component {
       clearTimeout(timeout);
       this.setState({joined: true, dataConnection: dataConnection});
     });
+    dataConnection.on('close', () => {
+      this.setState({joined: false, dataConnection: null, code: '', error: 'Lost connection to host'});
+    });
   }
 
   render() {
@@ -51,7 +54,7 @@ class Player extends Component {
             floatingLabelText='Room Code'
             maxLength='4'
             value={this.state.code}
-            onChange={(_, v) => this.setState({code: v})}
+            onChange={(_, v) => this.setState({code: v.toUpperCase()})}
             errorText={this.state.error}
           />
           <TextField
