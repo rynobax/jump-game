@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import Peer from 'peerjs';
+import Paper from 'material-ui/Paper';
+import CircularProgress from 'material-ui/CircularProgress';
   
 const roomCodeOptions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -38,7 +40,8 @@ class Host extends Component {
     super();
     this.state = {
       code: null,
-      peer: null
+      peer: null,
+      input: false
     }
   }
 
@@ -48,15 +51,36 @@ class Host extends Component {
       tempPeer.destroy();
       const peer = new Peer(code, {key: 'tdrp04ytylr0y66r'});
       this.setState({code: code, peer: peer});
+      peer.on('connection', (dataConnection) => {
+        console.log('dataConnection: ', dataConnection);
+        dataConnection.on('data', (data) => {
+          console.log('data: ', data);
+        });
+      });
     })
     .catch(console.error);
   }
 
   render() {
+    const codeNode = () => {
+      if(this.state.code){
+        return this.state.code;
+      } else {
+        return <CircularProgress />;
+      }
+    }
     return (
-      <div>
-        Code: {this.state.code}
-      </div>
+      <Paper
+        style={{
+          height: 400,
+          width: 400,
+          margin: 'auto',
+          marginTop: 25,
+          padding: 20,
+          textAlign: 'center'
+      }}>
+        <h1>Room Code: {codeNode()}</h1>
+      </Paper>
     )
   }
 }
