@@ -5,12 +5,14 @@ import registerServiceWorker from './registerServiceWorker';
 import './index.css';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 injectTapEventPlugin();
 
 const ThemedApp = () => {
   return (
-    <MuiThemeProvider>
+    <MuiThemeProvider  muiTheme={getMuiTheme(lightBaseTheme)}>
       <App />
     </MuiThemeProvider>
   );
