@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+  - "6"
+script:
+  - npm run test
+  - npm run build
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: build
+  repo: rynobax/jump-game
+  on:
+    branch: master
