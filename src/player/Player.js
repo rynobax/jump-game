@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import Peer from 'peerjs';
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
@@ -10,7 +9,6 @@ class Player extends Component {
   constructor() {
     super();
     this.state = {
-      peer: new Peer({key: 'tdrp04ytylr0y66r', debug: 3}),
       code: '',
       name: '',
       connected: false,
