@@ -7,7 +7,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import * as firebase from "firebase";
-console.log('firebase: ', firebase);
+
 firebase.initializeApp({
   apiKey: "AIzaSyC--x3JTzuP0ezakeUJKLtsiu--iyW1xrA",
   authDomain: "jump-game.firebaseapp.com",

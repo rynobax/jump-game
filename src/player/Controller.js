@@ -10,10 +10,10 @@ class Controller extends Component {
           fullWidth={true}
           style={{height: 150}}
           onMouseDown={() => {
-            this.props.dataConnection.send('jumpButtonDown')
+            this.props.jumpButton(true)
           }}
           onMouseUp={() => {
-            this.props.dataConnection.send('jumpButtonUp')
+            this.props.jumpButton(false)
           }}
         />
       </div>

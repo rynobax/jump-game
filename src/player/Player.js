@@ -19,7 +19,13 @@ class Player extends Component {
       database: firebase.database()
     }
 
-    this.dataConnection = null;
+    this.peer = null;
+
+    this.sendInputFunction = (inputName) => {
+      return (value) => {
+        this.peer.send('{"'+inputName+'": '+value+'}');
+      }
+    }
   }
 
   joinGame = () => {
@@ -32,11 +38,11 @@ class Player extends Component {
         // Name is taken
         return this.setState({error: 'Name is taken'});
       } else {
-        const peer = new SimplePeer();
+        const peer = new SimplePeer({initiator: true});
+        this.peer = peer;
 
         // Sending signal
         peer.on('signal', (signalData) => {
-          console.log('signalData: ', signalData);
           const newSignalDataRef = nameRef.push();
           newSignalDataRef.set({
             data: JSON.stringify(signalData)
@@ -44,24 +50,43 @@ class Player extends Component {
         });
 
         // Recieving signal
-        const hostSignalRef = database.ref('/rooms/'+code+'/host');
+        const hostSignalRef = database.ref('/rooms/'+code+'/host/'+name);
         hostSignalRef.on('child_added', (res) => {
-          console.log('data.val().data: ', res.val().data);
           const signal = JSON.parse(res.val().data);
-          console.log('signal: ', signal);
           peer.signal(signal);
         });
 
         // Connecting
-        peer.on('connect', function () {
-          // wait for 'connect' event before using the data channel
-          peer.send('hey host, how is it going?')
+        peer.on('connect', () => {
+          // The connection is established, so disconnect from firebase
+          this.setState({connected: true})
+          database.goOffline();
         });
 
         // Data
-        peer.on('data', function (data) {
+        peer.on('data', (data) => {
           // got a data channel message
-          console.log('got a message from host: ' + data)
+          if(data.toString() === 'startGame'){
+            this.setState({gameStarted: true})
+          }
+        });
+
+        // Host disconnect
+        peer.on('close', () => {
+          // Update UI
+          this.setState({
+            gameStarted: false,
+            connected: false,
+            error: 'Disconnected from host',
+            code: ''
+          });
+
+          // Reconnect to firebase
+          database.goOnline();
+
+          // Remove room
+          database.ref('/rooms/'+code).remove();
+          // TODO: Allow another host to join and continue game?
         });
       }
     })
@@ -71,19 +96,17 @@ class Player extends Component {
     if(this.state.connected){
       if(this.state.gameStarted){
         return (
-          <div/>
-          //<Controller />
+          <Controller 
+            jumpButton={this.sendInputFunction('jumpButton')}
+            />
         )
       } else {
         return (
           <Checkbox
             label="Ready"
             onCheck={(_, checked) => {
-              if(checked) {
-                this.dataConnection.send('ready');
-              } else {
-                this.dataConnection.send('unready');
-              }
+              const setReady = this.sendInputFunction('ready');
+              setReady(checked);
             }}
           />
         )
