@@ -7,11 +7,14 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import * as firebase from "firebase";
+console.log('firebase: ', firebase);
 firebase.initializeApp({
-  apiKey: "<API_KEY>",
-  authDomain: "<PROJECT_ID>.firebaseapp.com",
-  databaseURL: "https://<DATABASE_NAME>.firebaseio.com",
-  storageBucket: "<BUCKET>.appspot.com",
+  apiKey: "AIzaSyC--x3JTzuP0ezakeUJKLtsiu--iyW1xrA",
+  authDomain: "jump-game.firebaseapp.com",
+  databaseURL: "https://jump-game.firebaseio.com",
+  projectId: "jump-game",
+  storageBucket: "jump-game.appspot.com",
+  messagingSenderId: "1088406848683"
 });
 
 injectTapEventPlugin();

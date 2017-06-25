@@ -4,6 +4,8 @@ import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
 import Controller from './Controller';
 import Checkbox from 'material-ui/Checkbox';
+import * as firebase from 'firebase';
+import SimplePeer from 'simple-peer';
 
 class Player extends Component {
   constructor() {
@@ -13,7 +15,8 @@ class Player extends Component {
       name: '',
       connected: false,
       gameStarted: false,
-      error: ''
+      error: '',
+      database: firebase.database()
     }
 
     this.dataConnection = null;
@@ -21,40 +24,55 @@ class Player extends Component {
 
   joinGame = () => {
     this.setState({error: ''});
-    const {code, peer, name} = this.state;
-    const dataConnection = peer.connect(code, {metadata: {name: name}});
-    const timeout = setTimeout(() => {
-      this.setState({error: 'Cannot connect to room ' + code});
-    }, 3000)
-    dataConnection.on('open', () => {
-      clearTimeout(timeout);
-      this.setState({connected: true});
-      this.dataConnection = dataConnection;
-    });
-    dataConnection.on('close', () => {
-      this.setState({connected: false, code: '', error: 'Lost connection to host'});
-      this.dataConnection = null;
-    });
-    dataConnection.on('data', (data) => {
-      console.log('data: ', data);
-      if(data === 'gameStarted') {
-        this.setState({gameStarted: true});
+    const {code, database, name} = this.state;
+    const nameRef = database.ref('/rooms/'+code+'/players/'+name);
+    nameRef.once('value').then((data) => {
+      const val = data.val();
+      if (val) {
+        // Name is taken
+        return this.setState({error: 'Name is taken'});
+      } else {
+        const peer = new SimplePeer();
+
+        // Sending signal
+        peer.on('signal', (signalData) => {
+          console.log('signalData: ', signalData);
+          const newSignalDataRef = nameRef.push();
+          newSignalDataRef.set({
+            data: JSON.stringify(signalData)
+          });
+        });
+
+        // Recieving signal
+        const hostSignalRef = database.ref('/rooms/'+code+'/host');
+        hostSignalRef.on('child_added', (res) => {
+          console.log('data.val().data: ', res.val().data);
+          const signal = JSON.parse(res.val().data);
+          console.log('signal: ', signal);
+          peer.signal(signal);
+        });
+
+        // Connecting
+        peer.on('connect', function () {
+          // wait for 'connect' event before using the data channel
+          peer.send('hey host, how is it going?')
+        });
+
+        // Data
+        peer.on('data', function (data) {
+          // got a data channel message
+          console.log('got a message from host: ' + data)
+        });
       }
-      
-      else if(data === 'gameEnded') {
-        this.setState({gameStarted: false});
-      }
-    });
+    })
   }
 
   render() {
     if(this.state.connected){
       if(this.state.gameStarted){
         return (
-          <Controller 
-            jumpButtonDown={() => this.dataConnection.send('jumpButtonDown')}
-            jumpButtonUp={() => this.dataConnection.send('jumpButtonUp')}
-          />
+          <div/>
+          //<Controller />
         )
       } else {
         return (
