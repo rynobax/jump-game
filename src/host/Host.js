@@ -49,8 +49,8 @@ function getOpenRoom(database){
 }
 
 class Host extends Component {
-  constructor(){
-    super();
+  constructor(props){
+    super(props);
     this.state = {
       players: {},
       code: null,
@@ -180,10 +180,8 @@ class Host extends Component {
             textAlign: 'center'
         }}>
           <h1>Room Code: {codeNode()}</h1>
-          <br/>
-          Game will start when all players are ready
-          <br/>
-          <LobbyList players={playersArr} />
+          {this.state.gameType}
+          <LobbyList players={playersArr} gameType={this.props.gameType}/>
         </Paper>
       )
     }

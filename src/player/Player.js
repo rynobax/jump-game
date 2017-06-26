@@ -52,8 +52,7 @@ class Player extends Component {
         // Recieving signal
         const hostSignalRef = database.ref('/rooms/'+code+'/host/'+name);
         hostSignalRef.on('child_added', (res) => {
-          const signal = JSON.parse(res.val().data);
-          peer.signal(signal);
+          peer.signal(JSON.parse(res.val().data));
         });
 
         // Connecting
@@ -66,6 +65,9 @@ class Player extends Component {
         // Data
         peer.on('data', (data) => {
           // got a data channel message
+          if(data.toString() === 'controller'){
+            this.setState({controller: true})
+          }
           if(data.toString() === 'startGame'){
             this.setState({gameStarted: true})
           }
@@ -95,11 +97,19 @@ class Player extends Component {
   render() {
     if(this.state.connected){
       if(this.state.gameStarted){
-        return (
-          <Controller 
-            jumpButton={this.sendInputFunction('jumpButton')}
-            />
-        )
+        if(this.state.controller){
+          return (
+            <Controller 
+              jumpButton={this.sendInputFunction('jumpButton')}
+              />
+          )
+        } else {
+          return (
+            // This is the mode where keyboard is used for controll and
+            // game is displayed on the device
+            <div />
+          )
+        }
       } else {
         return (
           <Checkbox

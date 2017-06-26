@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
-import Host from './host/Host';
+import HostType from './host/HostType';
 import Player from './player/Player';
 import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
@@ -22,7 +22,7 @@ class App extends Component {
 
   getRoleContent = (role) => {
     if(this.state.role === 'host') {
-      return <Host/>;
+      return <HostType/>;
     } else if (this.state.role === 'player') {
       return <Player/>;
     } else if (this.state.role === 'unsupported') {
