@@ -16,7 +16,8 @@ class Player extends Component {
       connected: false,
       gameStarted: false,
       error: '',
-      database: firebase.database()
+      database: firebase.database(),
+      controller: true
     }
 
     this.peer = null;
@@ -105,7 +106,7 @@ class Player extends Component {
           )
         } else {
           return (
-            // This is the mode where keyboard is used for controll and
+            // This is the mode where keyboard is used for control and
             // game is displayed on the device
             <div />
           )
