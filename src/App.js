@@ -5,6 +5,7 @@ import Player from './player/Player';
 import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
 import Peer from 'simple-peer';
+import HostGame from './game/HostGame'
 
 class App extends Component {
   constructor(){
@@ -32,10 +33,13 @@ class App extends Component {
         </div>
       );
     } else {
+      //return <HostGame players={[]}/>;
+      
       return <Guest 
         becomeHost={() => this.setState({role: 'host'})}
         becomePlayer={() => this.setState({role: 'player'})}
         />;
+        
     } 
   }
 

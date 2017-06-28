@@ -22,6 +22,12 @@ const publicUrl = '';
 // Get environment variables to inject into our app.
 const env = getClientEnvironment(publicUrl);
 
+// Phaser requires custom webpack config
+const phaserModule = path.join(__dirname, '..', '/node_modules/phaser/');
+const phaser = path.join(phaserModule, 'build/custom/phaser-split.js');
+const pixi = path.join(phaserModule, 'build/custom/pixi.js');
+const p2 = path.join(phaserModule, 'build/custom/p2.js');
+
 // This is the development configuration.
 // It is focused on developer experience and fast rebuilds.
 // The production configuration is different and lives in a separate file.
@@ -90,6 +96,9 @@ module.exports = {
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
       'react-native': 'react-native-web',
+      'phaser': phaser,
+      'pixi.js': pixi,
+      'p2': p2,
     },
     plugins: [
       // Prevents users from importing files from outside of src/ (or node_modules/).
@@ -142,6 +151,9 @@ module.exports = {
           /\.gif$/,
           /\.jpe?g$/,
           /\.png$/,
+          /pixi\.js/,
+          /phaser-split\.js$/,
+          /p2\.js/,
         ],
         loader: require.resolve('file-loader'),
         options: {
@@ -204,6 +216,33 @@ module.exports = {
                 }),
               ],
             },
+          },
+        ],
+      },
+      {
+        test: /pixi\.js/,
+        use: [
+          {
+            loader: 'expose-loader',
+            options: 'PIXI'
+          },
+        ],
+      },
+      {
+        test: /phaser-split\.js$/,
+        use: [
+          {
+            loader: 'expose-loader',
+            options: 'Phaser'
+          },
+        ],
+      },
+      {
+        test: /p2\.js/,
+        use: [
+          {
+            loader: 'expose-loader',
+            options: 'p2'
           },
         ],
       },

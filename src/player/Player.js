@@ -6,6 +6,7 @@ import Controller from './Controller';
 import Checkbox from 'material-ui/Checkbox';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
+import DisplayGame from '../game/DisplayGame';
 
 class Player extends Component {
   constructor() {
@@ -17,7 +18,8 @@ class Player extends Component {
       gameStarted: false,
       error: '',
       database: firebase.database(),
-      controller: true
+      controller: true,
+      host: null
     }
 
     this.peer = null;
@@ -41,6 +43,7 @@ class Player extends Component {
       } else {
         const peer = new SimplePeer({initiator: true});
         this.peer = peer;
+        this.setState({host: peer});
 
         // Sending signal
         peer.on('signal', (signalData) => {
@@ -100,9 +103,10 @@ class Player extends Component {
       if(this.state.gameStarted){
         if(this.state.controller){
           return (
-            <Controller 
+            <DisplayGame host={this.state.host} />
+            /*<Controller 
               jumpButton={this.sendInputFunction('jumpButton')}
-              />
+              />*/
           )
         } else {
           return (

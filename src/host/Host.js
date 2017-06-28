@@ -4,7 +4,7 @@ import CircularProgress from 'material-ui/CircularProgress';
 import LobbyList from './LobbyList';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
-import Game from './Game';
+import HostGame from '../game/HostGame';
 
 const roomCodeOptions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -161,12 +161,13 @@ class Host extends Component {
     for (const playerName in this.state.players){
       playersArr.push({
         name: playerName,
-        input: this.state.players[playerName].input
+        input: this.state.players[playerName].input,
+        peer: this.state.players[playerName].peer
       });
     }
 
     if(this.state.gameStarted){
-      return <Game players={playersArr}/>
+      return <HostGame players={playersArr}/>
     } else {
       // Not enough players or not all players are ready
       return (
