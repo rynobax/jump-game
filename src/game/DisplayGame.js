@@ -3,7 +3,6 @@ import 'pixi.js';
 import 'p2';
 import Phaser from 'phaser';
 import { sharedPreload } from './SharedGame';
-import { recieveState } from './State';
 
 const runGame = (host) => {
   var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });

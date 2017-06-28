@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
-import Controller from './Controller';
+//import Controller from './Controller';
 import Checkbox from 'material-ui/Checkbox';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
