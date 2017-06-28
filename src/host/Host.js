@@ -123,7 +123,7 @@ class Host extends Component {
                   }
 
                   // Delete the room
-                  roomRef.remove();
+                  database.ref('/rooms/'+code).remove();
                 }
               }
             });
