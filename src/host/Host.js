@@ -63,6 +63,13 @@ class Host extends Component {
     getOpenRoom(database)
       .then((code) => {
         this.setState({code: code});
+        
+        const roomRef = database.ref('/rooms/'+code);
+
+        window.addEventListener('beforeunload', () => {
+          // Delete room if host closes window
+          roomRef.remove();
+        });
 
         // Players signaling
         const playersRef = database.ref('/rooms/'+code+'/players');
@@ -121,6 +128,9 @@ class Host extends Component {
                   for(const playerName in this.state.players){
                     this.state.players[playerName].peer.send('startGame');
                   }
+
+                  // Delete the room
+                  roomRef.remove();
                 }
               }
             });
