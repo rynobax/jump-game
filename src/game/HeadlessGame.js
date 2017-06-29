@@ -1,19 +1,19 @@
+/* eslint-disable */
 import React, { Component } from 'react';
 import { createGame } from './Game';
 import { serializeState } from './State';
+import work from 'webworkify-webpack'
 
 class DisplayGame extends Component {
   constructor(props){
     super(props);
     const players = props.players;
 
-    const onUpdateCb = (game) => {
-      const gameState = serializeState(game.world);
-      players.forEach(({peer}) => {
-        peer.send(JSON.stringify(gameState));
-      });
+    var worker = work(require.resolve("./Game.js"));
+    //var worker = new MyWorker();
+    worker.onmessage = (msg) => {
+      console.log('msg: ', msg.data);
     }
-    createGame({onUpdateCb: onUpdateCb, headless: true});
   }
 
   render() {

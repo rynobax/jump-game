@@ -7,11 +7,19 @@ import sky from './assets/sky.png';
 import ground from './assets/platform.png';
 import dude from './assets/dude.png';
 
+if(typeof window === 'undefined') {
+  const p = require('phaser');
+  console.log('p: ', p);
+  console.log('Phaser: ', Phaser);
+  console.log('sky: ', sky);
+}
+
 function createGame(options) {
   const state = { preload: preload, create: create, update: update}
   let onUpdateCb = null;
   let renderMode = Phaser.AUTO;
   if (options) {
+    console.log(typeof window);
     console.log('options: ', options);
     if (options.ignore){
       options.ignore.forEach((key) => {
@@ -128,6 +136,10 @@ function createGame(options) {
   }
 
   return game;
+}
+
+if(typeof window === 'undefined'){
+  createGame({headless: true, onUpdateCb: postMessage})
 }
 
 export { createGame }

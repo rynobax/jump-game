@@ -2,10 +2,11 @@ import React, { Component } from 'react';
 import './App.css';
 import HostType from './host/HostType';
 import Player from './player/Player';
-import Guest from './guest/Guest';
+//import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
 import Peer from 'simple-peer';
-//import HeadlessGame from './game/HeadlessGame'
+import HeadlessGame from './game/HeadlessGame'
+import HostGame from './game/HostGame'
 
 class App extends Component {
   constructor(){
@@ -33,11 +34,12 @@ class App extends Component {
         </div>
       );
     } else {
-      //return <HeadlessGame players={[]}/>
-      return <Guest 
+      return <HeadlessGame players={[]}/>
+      //return <HostGame players={[]}/>
+      /*return <Guest 
         becomeHost={() => this.setState({role: 'host'})}
         becomePlayer={() => this.setState({role: 'player'})}
-        />;
+        />;*/
     } 
   }
 
