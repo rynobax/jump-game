@@ -26,9 +26,6 @@ function createGame(options) {
       renderMode = Phaser.HEADLESS;
     }
   }
-  console.log('Phaser.AUTO: ', Phaser.AUTO);
-  console.log('Phaser.HEADLESS: ', Phaser.HEADLESS);
-  console.log('renderMode: ', renderMode);
   var game = new Phaser.Game(800, 600, renderMode, '', state);
 
   function preload() {

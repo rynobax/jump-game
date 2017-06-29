@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { broadcastState } from './State';
+import { serializeState } from './State';
 import { createGame } from './Game';
 
 
@@ -9,7 +9,10 @@ class HostGame extends Component {
     const players = props.players;
 
     const onUpdateCb = (game) => {
-      broadcastState(game.world, players);
+      const gameState = serializeState(game.world);
+      players.forEach(({peer}) => {
+        peer.send(JSON.stringify(gameState));
+      });
     }
 
     window.gameObj = createGame({onUpdateCb: onUpdateCb});

@@ -3,10 +3,10 @@ import 'p2';
 import Phaser from 'phaser';
 import { pick } from 'lodash';
 
-function broadcastState(world, players) {
+function serializeState(world) {
   const sprites = recursivelyGetSprites(world.children);
   const spriteData = getSpriteData(sprites);
-  broadcastData(players, spriteData);
+  return spriteData;
 }
 
 function recursivelyGetSprites(children){
@@ -28,10 +28,4 @@ function getSpriteData(sprites) {
   });
 }
 
-function broadcastData(players, spriteData) {
-  players.forEach(({peer}) => {
-    peer.send(JSON.stringify(spriteData));
-  });
-}
-
-export { broadcastState };
+export { serializeState };
