@@ -1,17 +1,15 @@
+import 'pixi.js';
+import 'p2';
 import Phaser from 'phaser';
 import { pick } from 'lodash';
 
 function broadcastState(world, players) {
   const sprites = recursivelyGetSprites(world.children);
-  console.log('sprites: ', sprites);
   const spriteData = getSpriteData(sprites);
-  console.log('spriteData: ', spriteData);
-  console.log('players: ', players);
   broadcastData(players, spriteData);
 }
 
 function recursivelyGetSprites(children){
-  console.log('children: ', children);
   return children.reduce((sprites, child) => {
     if(child instanceof Phaser.Sprite){
       sprites.push(child);
@@ -26,7 +24,7 @@ function recursivelyGetSprites(children){
 
 function getSpriteData(sprites) {
   return sprites.map((sprite) => {
-    return pick(sprite, ['x', 'y', 'key', 'frame'])
+    return pick(sprite, ['x', 'y', 'key', 'frame', 'scale'])
   });
 }
 

@@ -6,7 +6,7 @@
     "firebase": "^4.1.2",
     "lodash": "^4.17.4",
     "material-ui": "^0.18.3",
-    "phaser": "^2.6.2",
+    "phaser-ce": "^2.8.1",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-tap-event-plugin": "^2.0.1",

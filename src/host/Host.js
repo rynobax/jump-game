@@ -5,6 +5,7 @@ import LobbyList from './LobbyList';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
 import HostGame from '../game/HostGame';
+import HeadlessGame from '../game/HeadlessGame';
 
 const roomCodeOptions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -170,7 +171,13 @@ class Host extends Component {
     }
 
     if(this.state.gameStarted){
-      return <HostGame players={playersArr}/>
+      if(this.props.gameType === 'party') {
+        return <HostGame players={playersArr}/>
+      } else if (this.props.gameType === 'online') {
+        return <HeadlessGame players={playersArr}/>
+      } else {
+        throw Error('Invalid game type');
+      }
     } else {
       // Not enough players or not all players are ready
       return (
@@ -184,7 +191,6 @@ class Host extends Component {
             textAlign: 'center'
         }}>
           <h1>Room Code: {codeNode()}</h1>
-          {this.state.gameType}
           <LobbyList players={playersArr} gameType={this.props.gameType}/>
         </Paper>
       )

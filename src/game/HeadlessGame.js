@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import { broadcastState } from './State';
 import { createGame } from './Game';
+import { broadcastState } from './State';
 
-
-class HostGame extends Component {
+class DisplayGame extends Component {
   constructor(props){
     super(props);
     const players = props.players;
@@ -12,12 +11,12 @@ class HostGame extends Component {
       broadcastState(game.world, players);
     }
 
-    window.gameObj = createGame({onUpdateCb: onUpdateCb});
+    createGame({onUpdateCb: onUpdateCb, headless: true});
   }
 
   render() {
-    return <div id={'game'}/>
+    return <h2>Keep this window visible or the game will freeze!</h2>
   }
 }
 
-export default HostGame;
+export default DisplayGame;

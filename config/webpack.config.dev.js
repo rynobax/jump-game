@@ -23,7 +23,7 @@ const publicUrl = '';
 const env = getClientEnvironment(publicUrl);
 
 // Phaser requires custom webpack config
-const phaserModule = path.join(__dirname, '..', '/node_modules/phaser/');
+const phaserModule = path.join(__dirname, '..', '/node_modules/phaser-ce/');
 const phaser = path.join(phaserModule, 'build/custom/phaser-split.js');
 const pixi = path.join(phaserModule, 'build/custom/pixi.js');
 const p2 = path.join(phaserModule, 'build/custom/p2.js');
