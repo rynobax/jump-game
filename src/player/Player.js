@@ -2,11 +2,10 @@ import React, { Component } from 'react';
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
-//import Controller from './Controller';
-import Checkbox from 'material-ui/Checkbox';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
 import DisplayGame from '../game/DisplayGame';
+import LobbyList from '../lobby/LobbyList';
 
 class Player extends Component {
   constructor() {
@@ -18,16 +17,35 @@ class Player extends Component {
       gameStarted: false,
       error: '',
       database: firebase.database(),
-      controller: true,
-      host: null
+      host: null,
+      players: []
     }
 
     this.peer = null;
 
-    this.sendInputFunction = (inputName) => {
-      return (value) => {
-        this.peer.send('{"'+inputName+'": '+value+'}');
-      }
+    this.broadcast = (obj) => {
+      this.peer.send(JSON.stringify(obj));
+    }
+
+    this.sendReady = (ready) => {
+      this.broadcast({
+        type: 'ready',
+        ready: ready
+      });
+    }
+
+    this.handleData = (data) => {
+        switch(data.type){
+          case 'startGame':
+            this.setState({gameStarted: true});
+            break;
+          case 'players':
+            this.setState({players: data.players});
+            break;
+          default:
+            throw Error('Unknown input ', data.type);
+        }
+        return;
     }
   }
 
@@ -41,9 +59,9 @@ class Player extends Component {
         // Name is taken
         return this.setState({error: 'Name is taken'});
       } else {
+        // Store reference to peer
         const peer = new SimplePeer({initiator: true});
         this.peer = peer;
-        this.setState({host: peer});
 
         // Sending signal
         peer.on('signal', (signalData) => {
@@ -61,20 +79,24 @@ class Player extends Component {
 
         // Connecting
         peer.on('connect', () => {
-          // The connection is established, so disconnect from firebase
           this.setState({connected: true})
+          
+          // The connection is established, so disconnect from firebase
           database.goOffline();
+          
+          // connect event is broken in chrome tabs or something, so this works around it for host
+          // https://github.com/feross/simple-peer/issues/178
+          setTimeout(() => {
+            this.broadcast({
+              type: 'connected'
+            });
+          }, 1000);
         });
 
         // Data
         peer.on('data', (data) => {
           // got a data channel message
-          if(data.toString() === 'controller'){
-            this.setState({controller: true})
-          }
-          if(data.toString() === 'startGame'){
-            this.setState({gameStarted: true})
-          }
+          this.handleData(JSON.parse(data));
         });
 
         // Host disconnect
@@ -101,30 +123,9 @@ class Player extends Component {
   render() {
     if(this.state.connected){
       if(this.state.gameStarted){
-        if(this.state.controller){
-          return (
-            <DisplayGame host={this.state.host} />
-            /*<Controller 
-              jumpButton={this.sendInputFunction('jumpButton')}
-              />*/
-          )
-        } else {
-          return (
-            // This is the mode where keyboard is used for control and
-            // game is displayed on the device
-            <div />
-          )
-        }
+        return <DisplayGame host={this.peer} />
       } else {
-        return (
-          <Checkbox
-            label="Ready"
-            onCheck={(_, checked) => {
-              const setReady = this.sendInputFunction('ready');
-              setReady(checked);
-            }}
-          />
-        )
+        return <LobbyList players={this.state.players} checkFunction={this.sendReady} />
       }
     } else {
       return (

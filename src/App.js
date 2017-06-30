@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import './App.css';
-import HostType from './host/HostType';
+import HostName from './host/HostName';
 import Player from './player/Player';
 import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
 import Peer from 'simple-peer';
-//import HeadlessGame from './game/HeadlessGame'
+import Paper from 'material-ui/Paper';
 
 class App extends Component {
   constructor(){
@@ -23,7 +23,7 @@ class App extends Component {
 
   getRoleContent = (role) => {
     if(this.state.role === 'host') {
-      return <HostType/>;
+      return <HostName/>;
     } else if (this.state.role === 'player') {
       return <Player/>;
     } else if (this.state.role === 'unsupported') {
@@ -33,7 +33,6 @@ class App extends Component {
         </div>
       );
     } else {
-      //return <HeadlessGame players={[]}/>
       return <Guest 
         becomeHost={() => this.setState({role: 'host'})}
         becomePlayer={() => this.setState({role: 'player'})}
@@ -49,7 +48,18 @@ class App extends Component {
           titleStyle={{textAlign: "center"}}
           showMenuIconButton={false}
         />
-        {this.getRoleContent(this.state.role)}
+        <div id={'gameDiv'} style={{margin: 'auto', width: '800px'}}/>
+        <Paper
+          style={{
+            height: 800,
+            width: 600,
+            margin: 'auto',
+            marginTop: 25,
+            padding: 20,
+            textAlign: 'center'
+        }}>
+          {this.getRoleContent(this.state.role)}
+        </Paper>
       </div>
     )
   }

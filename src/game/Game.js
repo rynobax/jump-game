@@ -12,10 +12,8 @@ function createGame(options) {
   let onUpdateCb = null;
   let renderMode = Phaser.AUTO;
   if (options) {
-    console.log('options: ', options);
     if (options.ignore){
       options.ignore.forEach((key) => {
-        console.log(key);
         delete state[key];
       });
     }
@@ -26,7 +24,7 @@ function createGame(options) {
       renderMode = Phaser.HEADLESS;
     }
   }
-  var game = new Phaser.Game(800, 600, renderMode, '', state);
+  var game = new Phaser.Game(800, 600, renderMode, 'gameDiv', state);
 
   function preload() {
     game.load.image('sky', sky);

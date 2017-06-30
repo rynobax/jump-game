@@ -15,11 +15,11 @@ class HostGame extends Component {
       });
     }
 
-    window.gameObj = createGame({onUpdateCb: onUpdateCb});
+    createGame({onUpdateCb: onUpdateCb});
   }
 
   render() {
-    return <div id={'game'}/>
+    return <div/>
   }
 }
 

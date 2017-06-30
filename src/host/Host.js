@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
 import Paper from 'material-ui/Paper';
 import CircularProgress from 'material-ui/CircularProgress';
-import LobbyList from './LobbyList';
+import LobbyList from '../lobby/LobbyList';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
 import HostGame from '../game/HostGame';
-import HeadlessGame from '../game/HeadlessGame';
 
 const roomCodeOptions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -52,105 +51,190 @@ function getOpenRoom(database){
 class Host extends Component {
   constructor(props){
     super(props);
+    const players = {};
+    players[props.name] = {
+      host: true,
+      ready: false,
+      input: {},
+      // Peer object with blank methods so I don't have to
+      // filter when I iterate over players
+      peer: {
+        send: () => {}
+      }
+    }
     this.state = {
-      players: {},
+      players: players,
       code: null,
       gameStarted: false
     }
+
+    this.database = null;
+    this.hostName = props.name;
+
+    this.copyPlayers = () => Object.assign({}, this.state.players);
+
+    this.playersToArray = () => {
+      const playersArr = [];
+      for (const playerName in this.state.players){
+        playersArr.push({
+          name: playerName,
+          input: this.state.players[playerName].input,
+          peer: this.state.players[playerName].peer,
+          ready: this.state.players[playerName].ready
+        });
+      }
+      return playersArr;
+    }
+
+    // Send message to all players
+    this.broadcast = (obj) => {
+      for(const playerName in this.state.players){
+        const peer = this.state.players[playerName].peer;
+        if(peer.connected) peer.send(JSON.stringify(obj));
+      }
+    }
+
+    this.broadcastPlayers = () => {
+      this.broadcast({
+        type: 'players',
+        players: this.playersToArray().map((e) => {
+          return {
+            name: e.name,
+            ready: e.ready
+          }
+        })
+      })
+    }
+
+    this.handleData = (playerName, data) => {
+      switch(data.type){
+        case 'ready':
+          this.handleReady(playerName, data.ready);
+          break;
+        case 'input':
+          this.handleInput(playerName, data.input);
+          break;
+        case 'connected':
+          this.handleConnected(playerName);
+          break;
+        default:
+          throw Error('Unkown input ', data.type);
+      }
+      return;
+    }
+
+    this.handleInput = (playerName, input) => {
+      const playersCopy = Object.assign({}, this.state.players);
+      const player = playersCopy[playerName];
+      for (const key in input) {
+        player.input[key] = input[key];
+      }
+      this.setState({players: playersCopy});
+    }
+
+    this.handleConnected = (playerName) => {
+      // Workaround for https://github.com/feross/simple-peer/issues/178
+      this.broadcastPlayers();
+    }
+    
+    this.handleReady = (name, ready) => {
+      const p = this.copyPlayers();
+      p[name].ready = ready;
+      this.setState({
+        players: p
+      }, () => {
+        // Update players of everyone's status
+        this.broadcastPlayers();
+
+        // After updating the players ready status, check if the game should start
+        let playerCount = 0;
+        const playersReady = [];
+        for(const playerName in this.state.players){
+          playerCount++;
+          playersReady.push(this.state.players[playerName].ready);
+        }
+        if(playerCount > 0 && playersReady.every(e => e === true)){
+          // We have enough players and they are all ready
+          this.setState({gameStarted: true});
+          
+          // Send start game to all peers
+          this.broadcast({type: 'startGame'});
+
+          // Delete the room
+          this.database.ref('/rooms/'+this.state.code).remove();
+        }
+      });
+    }
   }
+
 
   componentDidMount(){
     const database = firebase.database();
-    getOpenRoom(database)
-      .then((code) => {
-        this.setState({code: code});
+    this.database = database;
+    getOpenRoom(database).then((code) => {
+      // Display room code
+      this.setState({code: code});
 
-        // Players signaling
-        const playersRef = database.ref('/rooms/'+code+'/players');
-        playersRef.on('child_added', (res) => {
-          const playerName = res.key;
+      // Players signaling
+      database.ref('/rooms/'+code+'/players').on('child_added', ({key: playerName}) => {
+        // Create Peer channel
+        const peer = new SimplePeer();
 
-          // Create Peer channel
-          const peer = new SimplePeer();
-
-          // Upload Host signals
-          const signalDataRef = database.ref('/rooms/'+code+'/host/'+playerName);
-          peer.on('signal', (signalData) => {
-            const newSignalDataRef = signalDataRef.push();
-            newSignalDataRef.set({
-              data: JSON.stringify(signalData)
-            });
-          });
-          
-          // Add player to state
-          const playersCopy = Object.assign({}, this.state.players);
-          playersCopy[playerName] = {
-            peer: peer,
-            input: {
-              jumpButton: false,
-              ready: false
-            }
-          }
-          this.setState({players: playersCopy});
-
-          // Listen for player singnaling data
-          const playerRef = database.ref('/rooms/'+code+'/players/'+playerName);
-          playerRef.on('child_added', (res) => peer.signal(JSON.parse(res.val().data)));
-
-          peer.on('data', (data) => {
-            // The data is a json object to be merged into the players input
-            const input = JSON.parse(data);
-            const playersCopy = Object.assign({}, this.state.players);
-            const player = playersCopy[playerName];
-            for (const key in input) {
-              player.input[key] = input[key];
-            }
-            this.setState({players: playersCopy}, () => {
-              if(!this.state.gameStarted){
-              // After updating the players, if the game hasn't started, check if it should start
-                let playerCount = 0;
-                const playersReady = [];
-                for(const playerName in this.state.players){
-                  playerCount++;
-                  playersReady.push(this.state.players[playerName].input.ready);
-                }
-                if(playerCount > 0 && playersReady.every(e => e === true)){
-                  // We have players and they are all ready
-                  this.setState({gameStarted: true});
-                  
-                  // Send ready to all peers
-                  for(const playerName in this.state.players){
-                    this.state.players[playerName].peer.send('startGame');
-                  }
-
-                  // Delete the room
-                  database.ref('/rooms/'+code).remove();
-                }
-              }
-            });
-          });
-
-          // Player disconnect
-          peer.on('close', () => {
-            // Delete local ref to player
-            const playersCopy = Object.assign({}, this.state.players);
-            delete playersCopy[playerName];
-            this.setState({players: playersCopy});
-
-            // Delete remote ref to player
-            playerRef.remove();
-
-            // Remove callbacks
-            playerRef.off('child_added');
-
-            // Delete remote signaling to player
-            signalDataRef.remove();
-
-            // Delete peer reference
-            peer.destroy();
+        // Upload Host signals
+        const signalDataRef = database.ref('/rooms/'+code+'/host/'+playerName);
+        peer.on('signal', (signalData) => {
+          const newSignalDataRef = signalDataRef.push();
+          newSignalDataRef.set({
+            data: JSON.stringify(signalData)
           });
         });
-      })
+        
+        // Add player to player list
+        // Use fake peer so broadcasts don't fail
+        const playersCopy = this.copyPlayers();
+        playersCopy[playerName] = {
+          peer: peer,
+          //_peer: peer,
+          ready: false,
+          input: {
+            jumpButton: false
+          }
+        }
+        this.setState({players: playersCopy}, () => {
+          // And notify other players
+          this.broadcastPlayers();
+        });
+
+        // Listen for player singnaling data
+        const playerRef = database.ref('/rooms/'+code+'/players/'+playerName);
+        playerRef.on('child_added', (res) => peer.signal(JSON.parse(res.val().data)));
+
+        // Listen to messages from player
+        peer.on('data', (data) => {
+          this.handleData(playerName, JSON.parse(data));
+        });
+
+        // Player disconnect
+        peer.on('close', () => {
+          // Delete local ref to player
+          const playersCopy = Object.assign({}, this.state.players);
+          delete playersCopy[playerName];
+          this.setState({players: playersCopy});
+
+          // Delete remote ref to player
+          playerRef.remove();
+
+          // Remove callbacks
+          playerRef.off('child_added');
+
+          // Delete remote signaling to player
+          signalDataRef.remove();
+
+          // Delete peer reference
+          peer.destroy();
+        });
+      });
+    });
   }
 
   render() {
@@ -161,38 +245,20 @@ class Host extends Component {
         return <CircularProgress />;
       }
     }
-    const playersArr = [];
-    for (const playerName in this.state.players){
-      playersArr.push({
-        name: playerName,
-        input: this.state.players[playerName].input,
-        peer: this.state.players[playerName].peer
-      });
-    }
+
+    // Push players into array so it's easier to work with in the game
+    const playersArr = this.playersToArray();
 
     if(this.state.gameStarted){
-      if(this.props.gameType === 'party') {
-        return <HostGame players={playersArr}/>
-      } else if (this.props.gameType === 'online') {
-        return <HeadlessGame players={playersArr}/>
-      } else {
-        throw Error('Invalid game type');
-      }
+      // Display the game once it starts
+      return <HostGame players={playersArr}/>
     } else {
       // Not enough players or not all players are ready
       return (
-        <Paper
-          style={{
-            height: 400,
-            width: 400,
-            margin: 'auto',
-            marginTop: 25,
-            padding: 20,
-            textAlign: 'center'
-        }}>
+        <div>
           <h1>Room Code: {codeNode()}</h1>
-          <LobbyList players={playersArr} gameType={this.props.gameType}/>
-        </Paper>
+          <LobbyList players={playersArr} checkFunction={this.handleReady.bind(this, this.hostName)}/>
+        </div>
       )
     }
   }
