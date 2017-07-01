@@ -20,6 +20,7 @@ class LobbyList extends Component {
             floatingLabelFixed={true}
             onChange={(_, v) => this.setState({name: v})}
           />
+          <br/>
           <RaisedButton label="Host Game"
             style={{margin: 12}}
             onTouchTap={() => this.setState({submitted: true})}

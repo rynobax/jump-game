@@ -7,7 +7,6 @@ class HostGame extends Component {
   constructor(props){
     super(props);
     const {players, broadcast} = props;
-    console.log('players: ', players);
 
     const onUpdateCb = (game) => {
       broadcast({

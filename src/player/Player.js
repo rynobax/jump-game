@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
 import * as firebase from 'firebase';
@@ -7,6 +6,7 @@ import SimplePeer from 'simple-peer';
 import DisplayGame from './DisplayGame';
 import LobbyList from '../lobby/LobbyList';
 import { OnInputChange } from '../game/Input';
+import CircularProgress from 'material-ui/CircularProgress';
 
 class Player extends Component {
   constructor() {
@@ -15,6 +15,7 @@ class Player extends Component {
       code: '',
       name: '',
       connected: false,
+      connecting: false,
       gameStarted: false,
       error: '',
       database: firebase.database(),
@@ -67,14 +68,14 @@ class Player extends Component {
   }
 
   joinGame = () => {
-    this.setState({error: ''});
+    this.setState({error: '', connecting: true});
     const {code, database, name} = this.state;
     const nameRef = database.ref('/rooms/'+code+'/players/'+name);
     nameRef.once('value').then((data) => {
       const val = data.val();
       if (val) {
         // Name is taken
-        return this.setState({error: 'Name is taken'});
+        return this.setState({error: 'Name is taken', connecting: false});
       } else {
         // Store reference to peer
         const peer = new SimplePeer({initiator: true});
@@ -96,7 +97,6 @@ class Player extends Component {
 
         // Connecting
         peer.on('connect', () => {
-          this.setState({connected: true})
           
           // The connection is established, so disconnect from firebase
           database.goOffline();
@@ -107,6 +107,7 @@ class Player extends Component {
             this.broadcast({
               type: 'connected'
             });
+            this.setState({connected: true, connecting: false})
           }, 1000);
         });
 
@@ -138,6 +139,7 @@ class Player extends Component {
   }
 
   render() {
+    console.log(this.state);
     if(this.state.connected){
       if(this.state.gameStarted){
         return <DisplayGame gameState={this.state.gameState} />
@@ -145,40 +147,37 @@ class Player extends Component {
         return <LobbyList players={this.state.players} checkFunction={this.sendReady} />
       }
     } else {
-      return (
-        <Paper
-          style={{
-            height: 400,
-            width: 400,
-            margin: 'auto',
-            marginTop: 25,
-            padding: 20,
-            textAlign: 'center'
-        }}>
-          <h1>Join a Game</h1>
-          <TextField
-            hintText='Room Code'
-            floatingLabelText='Room Code'
-            maxLength='4'
-            value={this.state.code}
-            onChange={(_, v) => this.setState({code: v.toUpperCase()})}
-            errorText={this.state.error}
-          />
-          <TextField
-            hintText='Username'
-            floatingLabelText='Username'
-            maxLength='16'
-            value={this.state.name}
-            onChange={(_, v) => this.setState({name: v})}
-          />
-          <br/>
-          <RaisedButton
-            label='Join'
-            primary={true}
-            onClick={this.joinGame}
-          />
-        </Paper>
-      );
+      if(this.state.connecting){
+        return <CircularProgress size={80} thickness={5} />
+      } else {
+        return (
+          <div>
+            <h1>Join a Game</h1>
+            <TextField
+              hintText='Room Code'
+              floatingLabelText='Room Code'
+              maxLength='4'
+              value={this.state.code}
+              onChange={(_, v) => this.setState({code: v.toUpperCase()})}
+              errorText={this.state.error}
+            />
+            <br />
+            <TextField
+              hintText='Username'
+              floatingLabelText='Username'
+              maxLength='16'
+              value={this.state.name}
+              onChange={(_, v) => this.setState({name: v})}
+            />
+            <br/>
+            <RaisedButton
+              label='Join'
+              primary={true}
+              onClick={this.joinGame}
+            />
+          </div>
+        );
+      }
     }
   }
 }
