@@ -7,34 +7,26 @@ import sky from './assets/sky.png';
 import ground from './assets/platform.png';
 import dude from './assets/dude.png';
 
-function createGame(options) {
+function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
   const state = { preload: preload, create: create, update: update}
-  let onUpdateCb = null;
   let renderMode = Phaser.AUTO;
-  if (options) {
-    if (options.ignore){
-      options.ignore.forEach((key) => {
-        delete state[key];
-      });
-    }
-    if (options.onUpdateCb){
-      onUpdateCb = options.onUpdateCb;
-    }
-    if (options.headless && options.headless === true){
-      renderMode = Phaser.HEADLESS;
-    }
+  if (ignore){
+    ignore.forEach((key) => {
+      delete state[key];
+    });
   }
+
   var game = new Phaser.Game(800, 600, renderMode, 'gameDiv', state);
 
   function preload() {
     game.load.image('sky', sky);
     game.load.image('ground', ground);
     game.load.spritesheet('dude', dude, 32, 48);
+    game.stage.disableVisibilityChange = true;
   }
 
-  var player;
+  var players;
   var platforms;
-  var cursors;
 
   function create() {
     //  We're going to be using physics, so enable the Arcade Physics system
@@ -69,61 +61,71 @@ function createGame(options) {
     ledge = platforms.create(-150, 250, 'ground');
     ledge.body.immovable = true;
 
-    // The player and its settings
-    player = game.add.sprite(32, game.world.height - 150, 'dude');
+    players = inputPlayers;
+    for(const playerName in inputPlayers){
+      // The player and its settings
+      const player = game.add.sprite(32, game.world.height - 150, 'dude');
 
-    //  We need to enable physics on the player
-    game.physics.arcade.enable(player);
+      //  We need to enable physics on the player
+      game.physics.arcade.enable(player);
 
-    //  Player physics properties. Give the little guy a slight bounce.
-    player.body.bounce.y = 0.2;
-    player.body.gravity.y = 300;
-    player.body.collideWorldBounds = true;
+      //  Player physics properties. Give the little guy a slight bounce.
+      player.body.bounce.y = 0.2;
+      player.body.gravity.y = 300;
+      player.body.collideWorldBounds = true;
 
-    //  Our two animations, walking left and right.
-    player.animations.add('left', [0, 1, 2, 3], 10, true);
-    player.animations.add('right', [5, 6, 7, 8], 10, true);
-
-    cursors = game.input.keyboard.createCursorKeys();
+      //  Our two animations, walking left and right.
+      player.animations.add('left', [0, 1, 2, 3], 10, true);
+      player.animations.add('right', [5, 6, 7, 8], 10, true);
+      players[playerName].ref = player;
+    };
   }
 
+  // For testing locally in two browser windows,
+  // since requestAnimationFrame will not run for both
+  setInterval(update, 1000/60);
   function update() {
-    //  Collide the player and the stars with the platforms
-    game.physics.arcade.collide(player, platforms);
+    for(const playerName in players) {
+      const input = getPlayerInput(playerName);
+      const player = players[playerName].ref;
 
-    //  Reset the players velocity (movement)
-    player.body.velocity.x = 0;
+      //  Collide the player and the stars with the platforms
+      game.physics.arcade.collide(player, platforms);
 
-    if (cursors.left.isDown)
-    {
-        //  Move to the left
-        player.body.velocity.x = -150;
+      //  Reset the players velocity (movement)
+      player.body.velocity.x = 0;
 
-        player.animations.play('left');
+      if (input.left)
+      {
+          //  Move to the left
+          player.body.velocity.x = -150;
+
+          player.animations.play('left');
+      }
+      else if (input.right)
+      {
+          //  Move to the right
+          player.body.velocity.x = 150;
+
+          player.animations.play('right');
+      }
+      else
+      {
+          //  Stand still
+          player.animations.stop();
+
+          player.frame = 4;
+      }
+
+      //  Allow the player to jump if they are touching the ground.
+      if (input.up && player.body.touching.down)
+      {
+          player.body.velocity.y = -350;
+      }
     }
-    else if (cursors.right.isDown)
-    {
-        //  Move to the right
-        player.body.velocity.x = 150;
-
-        player.animations.play('right');
-    }
-    else
-    {
-        //  Stand still
-        player.animations.stop();
-
-        player.frame = 4;
-    }
-
-    //  Allow the player to jump if they are touching the ground.
-    if (cursors.up.isDown && player.body.touching.down)
-    {
-        player.body.velocity.y = -350;
-    }
-
     if(onUpdateCb != null) onUpdateCb(game);
   }
+    
 
   return game;
 }

@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import Paper from 'material-ui/Paper';
 import CircularProgress from 'material-ui/CircularProgress';
 import LobbyList from '../lobby/LobbyList';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
-import HostGame from '../game/HostGame';
+import HostGame from './HostGame';
+import { OnInputChange, DefaultInput } from '../game/Input';
 
 const roomCodeOptions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -55,7 +55,7 @@ class Host extends Component {
     players[props.name] = {
       host: true,
       ready: false,
-      input: {},
+      input: DefaultInput(),
       // Peer object with blank methods so I don't have to
       // filter when I iterate over players
       peer: {
@@ -84,6 +84,17 @@ class Host extends Component {
         });
       }
       return playersArr;
+    }
+
+    this.getPlayersForGame = () => {
+      // Don't send peer info
+      const players = {};
+      for(const playerName in this.state.players) {
+        players[playerName] = {
+          input: this.state.players[playerName].input
+        }
+      }
+      return players;
     }
 
     // Send message to all players
@@ -123,14 +134,19 @@ class Host extends Component {
       return;
     }
 
+    // Input from players
     this.handleInput = (playerName, input) => {
-      const playersCopy = Object.assign({}, this.state.players);
-      const player = playersCopy[playerName];
+      const playersCopy = this.copyPlayers();
       for (const key in input) {
-        player.input[key] = input[key];
+        playersCopy[playerName].input[key] = input[key];
       }
       this.setState({players: playersCopy});
     }
+
+    // Input from host
+    OnInputChange((input) => {
+      this.handleInput(this.hostName, input);
+    });
 
     this.handleConnected = (playerName) => {
       // Workaround for https://github.com/feross/simple-peer/issues/178
@@ -196,9 +212,7 @@ class Host extends Component {
           peer: peer,
           //_peer: peer,
           ready: false,
-          input: {
-            jumpButton: false
-          }
+          input: DefaultInput()
         }
         this.setState({players: playersCopy}, () => {
           // And notify other players
@@ -251,7 +265,7 @@ class Host extends Component {
 
     if(this.state.gameStarted){
       // Display the game once it starts
-      return <HostGame players={playersArr}/>
+      return <HostGame players={this.getPlayersForGame()} broadcast={this.broadcast}/>
     } else {
       // Not enough players or not all players are ready
       return (

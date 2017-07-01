@@ -6,7 +6,7 @@ import { pick } from 'lodash';
 function serializeState(world) {
   const sprites = recursivelyGetSprites(world.children);
   const spriteData = getSpriteData(sprites);
-  return spriteData;
+  return {sprites: spriteData};
 }
 
 function recursivelyGetSprites(children){

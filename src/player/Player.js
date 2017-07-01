@@ -4,8 +4,9 @@ import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
 import * as firebase from 'firebase';
 import SimplePeer from 'simple-peer';
-import DisplayGame from '../game/DisplayGame';
+import DisplayGame from './DisplayGame';
 import LobbyList from '../lobby/LobbyList';
+import { OnInputChange } from '../game/Input';
 
 class Player extends Component {
   constructor() {
@@ -18,7 +19,10 @@ class Player extends Component {
       error: '',
       database: firebase.database(),
       host: null,
-      players: []
+      players: [],
+      gameState: {
+        sprites: []
+      }
     }
 
     this.peer = null;
@@ -42,10 +46,23 @@ class Player extends Component {
           case 'players':
             this.setState({players: data.players});
             break;
+          case 'gameUpdate':
+            this.trackInputs();
+            this.setState({gameState: data.gameState});
+            break;
           default:
             throw Error('Unknown input ', data.type);
         }
         return;
+    }
+
+    this.trackInputs = () => {
+      OnInputChange((input) => {
+        this.broadcast({
+          type: 'input',
+          input: input
+        })
+      });
     }
   }
 
@@ -123,7 +140,7 @@ class Player extends Component {
   render() {
     if(this.state.connected){
       if(this.state.gameStarted){
-        return <DisplayGame host={this.peer} />
+        return <DisplayGame gameState={this.state.gameState} />
       } else {
         return <LobbyList players={this.state.players} checkFunction={this.sendReady} />
       }
