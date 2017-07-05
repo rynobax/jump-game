@@ -183,7 +183,6 @@ class Host extends Component {
     }
   }
 
-
   componentDidMount(){
     const database = firebase.database();
     this.database = database;

@@ -1,12 +1,11 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { serializeState } from '../game/State';
-import { createGame } from '../game/Game';
+import { createGame, gameDiv } from '../game/Game';
 
 
 class HostGame extends Component {
-  constructor(props){
-    super(props);
-    const {players, broadcast} = props;
+  componentDidMount(){
+    const {players, broadcast} = this.props;
 
     const onUpdateCb = (game) => {
       broadcast({
@@ -23,7 +22,7 @@ class HostGame extends Component {
   }
 
   render() {
-    return <div/>
+    return gameDiv();
   }
 }
 

@@ -1,11 +1,16 @@
 import 'pixi.js';
 import 'p2';
 import Phaser from 'phaser';
+import { random } from 'lodash';
+import React from 'react';
 
 // Image imports
 import sky from './assets/sky.png';
 import ground from './assets/platform.png';
 import dude from './assets/dude.png';
+
+const gameWidth = 800;
+const gameHeight = 600;
 
 function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
   const state = { preload: preload, create: create, update: update}
@@ -16,7 +21,7 @@ function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
     });
   }
 
-  var game = new Phaser.Game(800, 600, renderMode, 'gameDiv', state);
+  var game = new Phaser.Game(gameWidth, gameHeight, renderMode, 'gameDiv', state);
 
   function preload() {
     game.load.image('sky', sky);
@@ -25,8 +30,8 @@ function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
     game.stage.disableVisibilityChange = true;
   }
 
-  var players;
-  var platforms;
+  let players;
+  let platforms;
 
   function create() {
     //  We're going to be using physics, so enable the Arcade Physics system
@@ -54,75 +59,174 @@ function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
     //  This stops it from falling away when you jump on it
     ground.body.immovable = true;
 
-    //  Now let's create two ledges
-    var ledge = platforms.create(400, 400, 'ground');
-    ledge.body.immovable = true;
+    // Destroy it when it leaves the screen
+    ground.checkWorldBounds = true;
+    ground.events.onOutOfBounds.add((o) => {
+      o.destroy();
+    });
 
-    ledge = platforms.create(-150, 250, 'ground');
-    ledge.body.immovable = true;
-
-    players = inputPlayers;
+    players = Object.assign({}, inputPlayers);
     for(const playerName in inputPlayers){
       // The player and its settings
-      const player = game.add.sprite(32, game.world.height - 150, 'dude');
+      const playerSprite = game.add.sprite(500, game.world.height - 150, 'dude');
 
       //  We need to enable physics on the player
-      game.physics.arcade.enable(player);
+      game.physics.arcade.enable(playerSprite);
 
       //  Player physics properties. Give the little guy a slight bounce.
-      player.body.bounce.y = 0.2;
-      player.body.gravity.y = 300;
-      player.body.collideWorldBounds = true;
+      playerSprite.body.bounce.y = 0;
+      playerSprite.body.gravity.y = 1000;
+      
+      playerSprite.checkWorldBounds = true;
+      playerSprite.events.onOutOfBounds.add((o) => {
+        if(o.x < 0 || o.y > 0){
+          o.kill();
+          players[playerName].text.destroy();
+          delete players[playerName];
+          if(Object.keys(players).length === 0) {
+            game.paused = true;
+            const style = {font: '32px Calibri', boundsAlignH: 'center', boundsAlignV: 'middle', align: 'center'};
+            const text = game.add.text(0, 0, playerName + ' is the winner!\nRestarting in 5 seconds.', style);
+            text.setTextBounds(0, 100, game.width, 100);
+            setTimeout(() => {
+              game.paused = false;
+              game.state.restart();
+            }, 5000)
+          }
+        }
+      });
 
       //  Our two animations, walking left and right.
-      player.animations.add('left', [0, 1, 2, 3], 10, true);
-      player.animations.add('right', [5, 6, 7, 8], 10, true);
-      players[playerName].ref = player;
+      playerSprite.animations.add('left', [0, 1, 2, 3], 10, true);
+      playerSprite.animations.add('right', [5, 6, 7, 8], 10, true);
+      players[playerName].sprite = playerSprite;
+
+      const style = {font: '16px Arial', align: 'center'};
+      const text = game.add.text(0, 0, playerName, style);
+      players[playerName].text = text;
+
+      //debugText = game.add.text(0, 0, '');
     };
   }
 
-  // For testing locally in two browser windows,
-  // since requestAnimationFrame will not run for both
-  setInterval(update, 1000/60);
+  function addPlatform() {
+    function getHeight(lastY) {
+      // Get the range of valid heights for platforms
+      const heightMax = game.height - 64;
+      const heightMin = 200;
+
+      const maxDiff = 100;
+
+      // Get the range for the platform we are about to get
+      // This is based off the last platform created
+      // so that the player will be able to jump to it
+      let rangeMax = lastY + maxDiff;
+      if(rangeMax > heightMax) rangeMax = heightMax;
+      let rangeMin = lastY - maxDiff;
+      if(rangeMin < heightMin) rangeMin = heightMin;
+
+      const num = random(rangeMin, rangeMax);
+      return num;
+    }
+
+    const latestPlatform = platforms.getTop();
+    var ledge = platforms.create(game.width, getHeight(latestPlatform.y), 'ground');
+    ledge.body.immovable = true;
+    ledge.checkWorldBounds = true;
+    ledge.events.onOutOfBounds.add((o) => {
+      o.destroy();
+    });
+  }
+
+  function shouldAddPlatform(){
+    const pc = platforms.length;
+    let chance;
+    if(platforms.getTop().x > game.width - 200){
+      chance = 0;
+    } else {
+      switch(pc) {
+        case 0:
+          chance = 1/1;
+          break;
+        case 1:
+          chance = 1/30;
+          break;
+        case 2:
+          chance = 1/200;
+          break;
+        case 3:
+          chance = 1/400;
+          break;
+        default:
+          chance = 0;
+      }
+    }
+    //debugText.text = chance;
+    if(Math.random() < chance) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   function update() {
+    const speed = 3;
+    // Update players
     for(const playerName in players) {
       const input = getPlayerInput(playerName);
-      const player = players[playerName].ref;
+      const playerSprite = players[playerName].sprite;
+
+      playerSprite.x -= speed;
 
       //  Collide the player and the stars with the platforms
-      game.physics.arcade.collide(player, platforms);
+      game.physics.arcade.collide(playerSprite, platforms);
 
       //  Reset the players velocity (movement)
-      player.body.velocity.x = 0;
+      playerSprite.body.velocity.x = 0;
 
       if (input.left)
       {
           //  Move to the left
-          player.body.velocity.x = -150;
+          playerSprite.body.velocity.x = -200;
 
-          player.animations.play('left');
+          playerSprite.animations.play('left');
       }
       else if (input.right)
       {
           //  Move to the right
-          player.body.velocity.x = 150;
+          playerSprite.body.velocity.x = 400;
 
-          player.animations.play('right');
+          playerSprite.animations.play('right');
       }
       else
       {
           //  Stand still
-          player.animations.stop();
+          playerSprite.animations.stop();
 
-          player.frame = 4;
+          playerSprite.frame = 4;
       }
 
       //  Allow the player to jump if they are touching the ground.
-      if (input.up && player.body.touching.down)
+      if (input.up && playerSprite.body.touching.down)
       {
-          player.body.velocity.y = -350;
+          playerSprite.body.velocity.y = -700;
       }
+
+      const playerText = players[playerName].text;
+      playerText.x = playerSprite.x+(playerSprite.width/2)-(playerText.width/2);
+      playerText.y = playerSprite.y-22;
     }
+
+    // Update Platforms
+    platforms.forEach((platform) => {
+      platform.x -= speed;
+    });
+
+    // Possibly add another platform
+    if(shouldAddPlatform()) {
+      addPlatform();
+    }
+
     if(onUpdateCb != null) onUpdateCb(game);
   }
     
@@ -130,4 +234,12 @@ function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
   return game;
 }
 
-export { createGame }
+function gameDiv() {
+  return (
+    <div style={{width: '100vw', height: '100vh', position: 'fixed', background: 'white', left: '0px', top: '64px'}}>
+      <div id='gameDiv' style={{margin: 'auto', width: gameWidth+'px', height: gameHeight+'px'}}/>
+    </div>
+  );
+}
+
+export { createGame, gameDiv }

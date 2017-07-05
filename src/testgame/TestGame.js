@@ -2,11 +2,16 @@ import React, { Component } from 'react';
 import HostGame from '../host/HostGame';
 import { OnInputChange, DefaultInput } from '../game/Input';
 
+/*
+  This is used so I can test the game without going through the menus
+*/
+
 class TestGame extends Component {
   constructor(props){
     super(props);
     const players = {};
-    players[props.name] = {
+    this.hostName = 'Ryan';
+    players[this.hostName] = {
       host: true,
       ready: false,
       input: DefaultInput(),
@@ -16,6 +21,7 @@ class TestGame extends Component {
         send: () => {}
       }
     }
+
     this.state = {
       players: players
     }

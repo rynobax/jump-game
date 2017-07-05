@@ -48,6 +48,7 @@ class Player extends Component {
             this.setState({players: data.players});
             break;
           case 'gameUpdate':
+            console.log(data)
             this.trackInputs();
             this.setState({gameState: data.gameState});
             break;
@@ -139,7 +140,6 @@ class Player extends Component {
   }
 
   render() {
-    console.log(this.state);
     if(this.state.connected){
       if(this.state.gameStarted){
         return <DisplayGame gameState={this.state.gameState} />
