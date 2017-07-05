@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import HostName from './host/HostName';
+import TestGame from './testgame/TestGame';
 import Player from './player/Player';
 import Guest from './guest/Guest';
 import AppBar from 'material-ui/AppBar';
@@ -33,10 +34,13 @@ class App extends Component {
         </div>
       );
     } else {
+      /*
       return <Guest 
         becomeHost={() => this.setState({role: 'host'})}
         becomePlayer={() => this.setState({role: 'player'})}
         />;
+      */
+      return <TestGame/>
     } 
   }
 
