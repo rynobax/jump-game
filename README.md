@@ -1,3 +1,7 @@
 # jump-game
-P2p gaming using WebRTC.  Firebase Realtime Database used to broker the connection between peers, but all communication after is strictly between web browsers.
-Game not implemented yet, but if you host a "Party Mode" game, and join the game with another browser, you can press the button and watch it update on the host's screen.
+A mulitplayer game that uses WebRTC.
+
+## Playing
+One player should press the host button.  Other players should press join, then use the host's code to join his game.  Once everyone presses the ready button, the game will begin.
+
+The goal is to stay on the platforms.  The last player to fall wins.
