@@ -87,7 +87,8 @@ function createGame(inputPlayers, onUpdateCb, ignore, getPlayerInput) {
             game.paused = true;
             const style = {font: '32px Calibri', boundsAlignH: 'center', boundsAlignV: 'middle', align: 'center'};
             const text = game.add.text(0, 0, playerName + ' is the winner!\nRestarting in 5 seconds.', style);
-            text.setTextBounds(0, 100, game.width, 100);
+            text.y = (game.height/2) - (text.height/2);
+            text.x = (game.width/2) - (text.width/2);
             setTimeout(() => {
               game.paused = false;
               game.state.restart();
