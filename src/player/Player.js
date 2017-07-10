@@ -48,7 +48,6 @@ class Player extends Component {
             this.setState({players: data.players});
             break;
           case 'gameUpdate':
-            console.log(data)
             this.trackInputs();
             this.setState({gameState: data.gameState});
             break;
